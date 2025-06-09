@@ -22,10 +22,6 @@ def main():
     # Load data
     data = load_data()
 
-    # Split the first row (header row) and remaining rows
-    header_row = data.iloc[[0]]  # First row after headers
-    remaining_rows = data.iloc[1:]  # Other rows
-
     # Create grid options for AgGrid
     gb = GridOptionsBuilder.from_dataframe(data)
     gb.configure_default_column(editable=True, resizable=True)
@@ -35,27 +31,36 @@ def main():
         data.columns[0],
         cellRenderer="""function(params) {
             if (params.node.rowIndex === 0) {
-                return `<input type='checkbox' onclick='toggleRows()' /> ` + params.value;
+                return `<input type='checkbox' id='toggleRows' /> ` + params.value;
             } else {
                 return params.value;
             }
         }"""
     )
 
-    # Add tooltip to bold row
+    # Add tooltip to all cells in the bold row
     gb.configure_column(
         data.columns[1],
-        tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2"
+        tooltipValueGetter="""function(params) {
+            if (params.node.rowIndex === 0) {
+                return 'Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2';
+            }
+            return null;
+        }"""
     )
 
     # Set the bold row with styling
+    gb.configure_grid_options(
+        getRowStyle="""function(params) {
+            if (params.node.rowIndex === 0) {
+                return {fontWeight: 'bold', backgroundColor: '#f0f0f0'};
+            }
+            return null;
+        }"""
+    )
+
+    # Build grid options
     grid_options = gb.build()
-    grid_options["rowStyle"] = """function(params) {
-        if (params.node.rowIndex === 0) {
-            return {fontWeight: 'bold', backgroundColor: '#f0f0f0'};
-        }
-        return null;
-    };"""
 
     # Display the AgGrid with the options
     st.subheader("Interactive Data Viewer")
