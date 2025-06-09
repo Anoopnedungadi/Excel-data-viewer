@@ -1,45 +1,44 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from st_aggrid import AgGrid, GridOptionsBuilder
 
-# Sample DataFrame
+# Load data from Excel file
 def load_data():
-    return pd.DataFrame({
-        "Name": ["Alice", "Bob", "Charlie"],
-        "Score": [95, 88, 92]
-    })
+    file_path = "Sample - CDM POC.xlsx"
+    sheet_data = pd.read_excel(file_path, sheet_name="Sheet1")
+    return sheet_data
 
-# Streamlit app
+# Streamlit App
 def main():
-    st.title("CDM - Proof of Concept")
-
-    # Dummy fields
-    col1, col2, col3 = st.columns(3)
-    name = col1.text_input("Name", "")
-    country = col2.selectbox("Country", ["", "India", "Japan", "France", "Spain"])
-    geo = col3.selectbox("Geo", ["", "India", "Japan", "France", "Spain"])
+    st.title("CDM proof of concept")
 
     # Load data
     data = load_data()
 
-    # Configure AgGrid
-    gb = GridOptionsBuilder.from_dataframe(data)
-    gb.configure_default_column(editable=True)
-
-    # Add a simple checkbox renderer to one column
-    cell_renderer = JsCode("""
-    function(params) {
-        if (params.node.rowIndex === 0) {
-            return "✅ " + params.value;
-        }
-        return params.value;
+    # First row setup
+    header_row = data.iloc[[0]].copy()  # First row after headers
+    header_row_style = {
+        "fontWeight": "bold",
+        "backgroundColor": "#f0f0f0",
     }
-    """)
-    gb.configure_column("Name", cellRenderer=cell_renderer)
 
+    # Manage visibility with checkbox
+    show_remaining_rows = st.checkbox("Show additional rows", value=False)
+    displayed_data = header_row if not show_remaining_rows else data
+
+    # Create grid options
+    gb = GridOptionsBuilder.from_dataframe(displayed_data)
+    gb.configure_default_column(editable=True, resizable=True)
+    gb.configure_column(data.columns[0], tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2")
     grid_options = gb.build()
 
-    AgGrid(data, gridOptions=grid_options, theme="alpine")
+    # Apply styling for the header row
+    if not show_remaining_rows:
+        grid_options["rowStyle"] = header_row_style
+
+    # Display the AgGrid
+    st.subheader("Interactive Data Viewer")
+    AgGrid(displayed_data, gridOptions=grid_options, enable_enterprise_modules=True, theme="alpine")
 
 if __name__ == "__main__":
     main()
