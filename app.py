@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 # Load data from Excel file
 def load_data():
@@ -9,32 +10,49 @@ def load_data():
 
 # Streamlit App
 def main():
-    st.title("CDM end state Proof of concept")
+    st.title("Excel Data Viewer with Hover and Grouping")
 
     # Load data
     data = load_data()
 
-    # Add a checkbox to toggle visibility of additional rows
-    show_rows = st.checkbox("Show additional rows", value=False)
-
-    # Extract the first row and the remaining rows
+    # Split the first row (header row) and remaining rows
     header_row = data.iloc[[0]]  # First row after headers
     remaining_rows = data.iloc[1:]  # Other rows
 
-    # Style the first row
-    st.subheader("Visible Row")
-    st.markdown(
-        header_row.style.set_properties(**{
-            "font-weight": "bold",
-            "background-color": "#f0f0f0"
-        }).to_html(), 
-        unsafe_allow_html=True
+    # Create grid options for AgGrid
+    gb = GridOptionsBuilder.from_dataframe(data)
+    gb.configure_default_column(editable=True, resizable=True)
+
+    # Add a checkbox in the first cell of the bold row
+    gb.configure_column(
+        data.columns[0],
+        cellRenderer="function(params) { 
+            if (params.node.rowIndex === 0) {
+                return `<input type='checkbox' onclick='toggleRows()' /> ` + params.value;
+            } else {
+                return params.value;
+            }
+        }"
     )
 
-    # Conditionally show remaining rows
-    if show_rows:
-        st.subheader("Additional Rows")
-        st.dataframe(remaining_rows, use_container_width=True)
+    # Add tooltip to bold row
+    gb.configure_column(
+        data.columns[1],
+        tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2"
+    )
+
+    # Set the bold row with styling
+    grid_options = gb.build()
+    grid_options["rowStyle"] = "function(params) { 
+        if (params.node.rowIndex === 0) {
+            return {fontWeight: 'bold', backgroundColor: '#f0f0f0'};
+        }
+        return null;
+    };"
+
+    # Display the AgGrid with the options
+    st.subheader("Interactive Data Viewer")
+    AgGrid(data, gridOptions=grid_options, enable_enterprise_modules=True, theme="alpine")
 
 if __name__ == "__main__":
     main()
