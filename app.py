@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder
 
 # Load data from Excel file
-@st.cache_data
 def load_data():
     file_path = "Sample - CDM POC.xlsx"
     sheet_data = pd.read_excel(file_path, sheet_name="Sheet1")
@@ -11,18 +9,32 @@ def load_data():
 
 # Streamlit App
 def main():
-    st.title("Excel Data Viewer with AgGrid")
+    st.title("Excel Data Viewer with Grouping Functionality")
 
     # Load data
     data = load_data()
 
-    # Add grouping and interactivity
-    gb = GridOptionsBuilder.from_dataframe(data)
-    gb.configure_default_column(groupable=True, sortable=True, filterable=True)
-    grid_options = gb.build()
+    # Add a checkbox to toggle visibility of additional rows
+    show_rows = st.checkbox("Show additional rows", value=False)
 
-    st.subheader("Interactive Data Viewer")
-    AgGrid(data, gridOptions=grid_options)
+    # Extract the first row and the remaining rows
+    header_row = data.iloc[[0]]  # First row after headers
+    remaining_rows = data.iloc[1:]  # Other rows
+
+    # Style the first row
+    st.subheader("Visible Row")
+    st.markdown(
+        header_row.style.set_properties(**{
+            "font-weight": "bold",
+            "background-color": "#f0f0f0"
+        }).to_html(), 
+        unsafe_allow_html=True
+    )
+
+    # Conditionally show remaining rows
+    if show_rows:
+        st.subheader("Additional Rows")
+        st.dataframe(remaining_rows, use_container_width=True)
 
 if __name__ == "__main__":
     main()
