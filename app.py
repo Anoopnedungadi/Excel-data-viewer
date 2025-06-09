@@ -10,7 +10,7 @@ def load_data():
 
 # Streamlit App
 def main():
-    st.title("CDM - Proof of concept")
+    st.title("Excel Data Viewer with Hover and Grouping")
 
     # Add dummy fields
     with st.container():
@@ -31,7 +31,7 @@ def main():
         data.columns[0],
         cellRenderer="""function(params) {
             if (params.node.rowIndex === 0) {
-                return `<input type='checkbox' id='toggleRows' /> ` + params.value;
+                return `<input type='checkbox' onclick='toggleRows()' /> ` + params.value;
             } else {
                 return params.value;
             }
@@ -41,12 +41,7 @@ def main():
     # Add tooltip to all cells in the bold row
     gb.configure_column(
         data.columns[1],
-        tooltipValueGetter="""function(params) {
-            if (params.node.rowIndex === 0) {
-                return 'Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2';
-            }
-            return null;
-        }"""
+        tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2"
     )
 
     # Set the bold row with styling
