@@ -26,13 +26,13 @@ def main():
     # Add a checkbox in the first cell of the bold row
     gb.configure_column(
         data.columns[0],
-        cellRenderer="function(params) { 
+        cellRenderer="""function(params) {
             if (params.node.rowIndex === 0) {
                 return `<input type='checkbox' onclick='toggleRows()' /> ` + params.value;
             } else {
                 return params.value;
             }
-        }"
+        }"""
     )
 
     # Add tooltip to bold row
@@ -43,12 +43,12 @@ def main():
 
     # Set the bold row with styling
     grid_options = gb.build()
-    grid_options["rowStyle"] = "function(params) { 
+    grid_options["rowStyle"] = """function(params) {
         if (params.node.rowIndex === 0) {
             return {fontWeight: 'bold', backgroundColor: '#f0f0f0'};
         }
         return null;
-    };"
+    };"""
 
     # Display the AgGrid with the options
     st.subheader("Interactive Data Viewer")
