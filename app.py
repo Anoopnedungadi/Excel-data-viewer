@@ -10,35 +10,56 @@ def load_data():
 
 # Streamlit App
 def main():
-    st.title("CDM proof of concept")
+    st.title("Excel Data Viewer with Hover and Grouping")
+
+    # Add dummy fields
+    with st.container():
+        col1, col2, col3 = st.columns(3)
+        name = col1.text_input("Name", "")
+        country = col2.selectbox("Country", ["", "India", "Japan", "France", "Spain"], index=0)
+        geo = col3.selectbox("Geo", ["", "India", "Japan", "France", "Spain"], index=0)
 
     # Load data
     data = load_data()
 
-    # First row setup
-    header_row = data.iloc[[0]].copy()  # First row after headers
-    header_row_style = {
-        "fontWeight": "bold",
-        "backgroundColor": "#f0f0f0",
-    }
+    # Split the first row (header row) and remaining rows
+    header_row = data.iloc[[0]]  # First row after headers
+    remaining_rows = data.iloc[1:]  # Other rows
 
-    # Manage visibility with checkbox
-    show_remaining_rows = st.checkbox("Show additional rows", value=False)
-    displayed_data = header_row if not show_remaining_rows else data
-
-    # Create grid options
-    gb = GridOptionsBuilder.from_dataframe(displayed_data)
+    # Create grid options for AgGrid
+    gb = GridOptionsBuilder.from_dataframe(data)
     gb.configure_default_column(editable=True, resizable=True)
-    gb.configure_column(data.columns[0], tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2")
+
+    # Add a checkbox in the first cell of the bold row
+    gb.configure_column(
+        data.columns[0],
+        cellRenderer="""function(params) {
+            if (params.node.rowIndex === 0) {
+                return `<input type='checkbox' onclick='toggleRows()' /> ` + params.value;
+            } else {
+                return params.value;
+            }
+        }"""
+    )
+
+    # Add tooltip to bold row
+    gb.configure_column(
+        data.columns[1],
+        tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2"
+    )
+
+    # Set the bold row with styling
     grid_options = gb.build()
+    grid_options["rowStyle"] = """function(params) {
+        if (params.node.rowIndex === 0) {
+            return {fontWeight: 'bold', backgroundColor: '#f0f0f0'};
+        }
+        return null;
+    };"""
 
-    # Apply styling for the header row
-    if not show_remaining_rows:
-        grid_options["rowStyle"] = header_row_style
-
-    # Display the AgGrid
+    # Display the AgGrid with the options
     st.subheader("Interactive Data Viewer")
-    AgGrid(displayed_data, gridOptions=grid_options, enable_enterprise_modules=True, theme="alpine")
+    AgGrid(data, gridOptions=grid_options, enable_enterprise_modules=True, theme="alpine")
 
 if __name__ == "__main__":
     main()
