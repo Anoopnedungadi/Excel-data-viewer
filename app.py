@@ -9,7 +9,7 @@ def load_data():
 
 # Streamlit App
 def main():
-    st.title("Excel Data Viewer with Grouping Functionality")
+    st.title("CDM end state Proof of concept")
 
     # Load data
     data = load_data()
