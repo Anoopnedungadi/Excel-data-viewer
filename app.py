@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 # Load data from Excel file
 def load_data():
@@ -8,11 +8,10 @@ def load_data():
     sheet_data = pd.read_excel(file_path, sheet_name="Sheet1")
     return sheet_data
 
-# Streamlit App
 def main():
     st.title("CDM - Proof of Concept")
 
-    # Add dummy fields
+    # Dummy input fields
     with st.container():
         col1, col2, col3 = st.columns(3)
         name = col1.text_input("Name", "")
@@ -22,42 +21,32 @@ def main():
     # Load data
     data = load_data()
 
-    # Create grid options for AgGrid
+    # Insert a dummy checkbox column
+    data.insert(0, "Select", ["☐"] + [""] * (len(data) - 1))  # first row gets the checkbox
+
+    # Configure grid
     gb = GridOptionsBuilder.from_dataframe(data)
     gb.configure_default_column(editable=True, resizable=True)
 
-    # Add a checkbox in the first cell of the bold row
+    # Tooltip example
     gb.configure_column(
-        data.columns[0],
-        cellRenderer="""function(params) {
+        data.columns[2],  # Assuming this is the column you want tooltip on
+        headerTooltip="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2"
+    )
+
+    # Bold + background color styling for first row
+    row_style = JsCode("""
+        function(params) {
             if (params.node.rowIndex === 0) {
-                return `<input type='checkbox' onclick='toggleRows()' /> ` + params.value;
-            } else {
-                return params.value;
+                return { 'fontWeight': 'bold', 'backgroundColor': '#f0f0f0' };
             }
-        }"""
-    )
+        };
+    """)
+    gb.configure_grid_options(getRowStyle=row_style)
 
-    # Add tooltip to all cells in the bold row
-    gb.configure_column(
-        data.columns[1],
-        tooltipField="Confidence score: 95. Reason: SME weightage: 1, Multiple values: 2"
-    )
-
-    # Set the bold row with styling
-    gb.configure_grid_options(
-        getRowStyle="""function(params) {
-            if (params.node.rowIndex === 0) {
-                return {fontWeight: 'bold', backgroundColor: '#f0f0f0'};
-            }
-            return null;
-        }"""
-    )
-
-    # Build grid options
     grid_options = gb.build()
 
-    # Display the AgGrid with the options
+    # Display grid
     st.subheader("Interactive Data Viewer")
     AgGrid(data, gridOptions=grid_options, enable_enterprise_modules=True, theme="alpine")
 
