@@ -10,7 +10,7 @@ def load_data():
 
 # Streamlit App
 def main():
-    st.title("Excel Data Viewer with Hover and Grouping")
+    st.title("CDM proof of concept")
 
     # Load data
     data = load_data()
